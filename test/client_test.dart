@@ -56,25 +56,23 @@ void main() {
       expect(res, '{"message":"Hello World"}');
     });
 
-    // test('with invalid token', () async {
-    //   const address = liveAddress;
-    //   final token = 'jflsakjfalskfj';
-    //   final opts = Options(
-    //     token: token,
-    //     address: address,
-    //   );
-    //   final c = Client(opts);
-    //   final request = Request(service: 'helloworld', endpoint: 'Stream', body: {
-    //     'messages': 1,
-    //     'name': 'World',
-    //   });
+    test('with invalid token', () async {
+      const address = liveAddress;
+      final token = 'jflsakjfalskfj';
+      final opts = Options(
+        token: token,
+        address: address,
+      );
+      final c = Client(opts);
+      final request = Request(service: 'helloworld', endpoint: 'Stream', body: {
+        'messages': 1,
+        'name': 'World',
+      });
 
-    //   M3OStream st = await c.stream(request);
-    //   expect(st.toString(), 'Instance of \'M3OStream\'');
-    //   final res = await st.webS!.first;
-    //   expect(res, 'hello');
-    //   // expect(await st.webS.isEmpty, true);
-    // });
+      M3OStream st = await c.stream(request);
+      final res = await st.webS!.first;
+      expect(res, '{"Id":"v1","Code":401,"Detail":"Unauthorized","Status":"Unauthorized"}');
+    });
 
     test('with server unavailable', () async {
       const address = 'https://jflksdjflskajfl';

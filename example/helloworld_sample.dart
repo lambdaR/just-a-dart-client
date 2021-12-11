@@ -11,20 +11,17 @@ void main() async {
     ),
   );
 
-  final request1 = {
-    'name': 'Mighty Zeus',
-  };
+  CallRequest req = CallRequest(name: 'Mighty Zeus');
 
-  Response res1 = await hwservice.call(request1);
+  CallResponse res1 = await hwservice.call(req);
 
+  print('the message is ${res1.message}');
+  print('the code is ${res1.code}');
   print(res1);
 
-  final request2 = {
-    'messages': 15,
-    'name': 'World',
-  };
+  StreamRequest req2 = StreamRequest(messages: 15, name: 'World');
 
-  final st = await hwservice.stream(request2);
+  final st = await hwservice.stream(req2);
   final mst = st.asBroadcastStream();
 
   final first = await mst.first;
