@@ -2,18 +2,15 @@ import 'dart:async';
 import 'dart:io';
 import 'dart:convert';
 
+import 'package:freezed_annotation/freezed_annotation.dart';
+
+part 'client.freezed.dart';
+part 'client.g.dart';
+
 // local address for api
 const localAddress = 'http://localhost:8080';
 // public address for api
 const liveAddress = 'https://api.m3o.com';
-
-class M3OStream {
-  final WebSocket? webS;
-  final String service;
-  final String endpoint;
-
-  M3OStream(this.webS, this.service, this.endpoint);
-}
 
 class Options {
   // Token for authentication
@@ -64,29 +61,35 @@ class Client {
       httpRequest.add(utf8.encode(payload));
       final httpResponse = await httpRequest.close();
 
-      if (!(httpResponse.statusCode >= 200 && httpResponse.statusCode < 300)) {
-        final responseBody = await httpResponse.transform(Utf8Decoder()).join();
-
-        return Response.fromJson(jsonDecode(responseBody));
-      }
+      // if (!(httpResponse.statusCode >= 200 && httpResponse.statusCode < 300)) {
+      //   final responseBody = await httpResponse.transform(Utf8Decoder()).join();
+      //   return Response.Error(jsonDecode(responseBody));
+      // }
 
       final responseBody = await httpResponse.transform(Utf8Decoder()).join();
+      final jsonO = jsonDecode(responseBody);
 
-      return Response.fromJson(jsonDecode(responseBody));
+      return Response(jsonO);
+    } on TimeoutException catch (_) {
+      throw Exception(<String, dynamic>{
+        "id": 'm3o-dart',
+        "code": 408,
+        "detail": "timeout",
+        "status": 'request timeout',
+      });
     } catch (e) {
-      return Response(
-        body: null,
-        id: 'm3o-dart',
-        code: 503,
-        detail: e.toString(),
-        status: 'service unavailable',
-      );
+      throw Exception(<String, dynamic>{
+        "id": 'm3o-dart',
+        "code": 503,
+        "detail": e.toString(),
+        "status": 'service unavailable',
+      });
     } finally {
       c.close();
     }
   }
 
-  Future<M3OStream> stream(Request request) async {
+  Future<WebSocket> stream(Request request) async {
     var uri = '$address/v1/${request.service}/${request.endpoint}';
     uri = uri.replaceFirst('http', 'ws');
 
@@ -98,60 +101,67 @@ class Client {
     final payload = jsonEncode(request.body);
 
     try {
-      final _ = Uri.tryParse(uri);
+      final _ = Uri.parse(uri);
       final webS = await WebSocket.connect(uri, headers: headers);
-    
+
       webS.add(payload);
 
-      return M3OStream(webS, request.service, request.endpoint);
-    } catch (_) {
-      return M3OStream(null, request.service, request.endpoint);
+      return webS;
+    } on FormatException catch (_) {
+      throw Exception(<String, dynamic>{
+        "id": 'm3o-dart',
+        "code": 503,
+        "detail": "wrong format or service unavailable",
+        "status": 'service unavailable',
+      });
+    } catch (e) {
+      throw Exception(<String, dynamic>{
+        "id": 'm3o-dart',
+        "code": 503,
+        "detail": e.toString(),
+        "status": 'service unavailable',
+      });
     }
   }
 }
 
 /// Request is the request of the generic `api-client` call
-class Request {
-  Request({required this.service, required this.endpoint, required this.body});
+@Freezed()
+class Request with _$Request {
+  const factory Request(
+      {required String service,
+      required String endpoint,
+      required Map<String, dynamic> body}) = _Request;
 
-  final String service;
-  final String endpoint;
-  final Map<String, dynamic> body;
+  factory Request.fromJson(Map<String, dynamic> json) =>
+      _$RequestFromJson(json);
 }
 
 /// Response is the response of the generic `api-client` call.
-class Response {
-  // json and base64 encoded response body
-  Response({this.body, this.code, this.id, this.detail, this.status});
+@Freezed()
+class Response with _$Response {
+  const factory Response(Map<String, dynamic> body) = _Response;
 
-  final Map<String, dynamic>? body;
-  // error fields. Error json example
-  // {"id":"go.micro.client","code":500,"detail":"malformed method name: \"\"","status":"Internal Server Error"}
-  final int? code;
-  final String? id;
-  final String? detail;
-  final String? status;
+  factory Response.fromJson(Map<String, dynamic> json) =>
+      _$ResponseFromJson(json);
+}
 
-  factory Response.fromJson(Map<String, dynamic> json) {
-    if (json['Code'] != null) {
-      return Response(
-          body: null,
-          id: json['Id'],
-          detail: json['Detail'],
-          code: json['Code'],
-          status: json['Status']);
-    }
+@Freezed()
+class Merr with _$Merr {
+  const factory Merr(Map<String, dynamic> b) = _Merr;
 
-    return Response(
-        body: json, id: null, detail: null, code: null, status: null);
-  }
+  factory Merr.fromJson(Map<String, dynamic> json) => _$MerrFromJson(json);
+}
 
-  @override
-  String toString() {
-    if (body != null) {
-      return body.toString();
-    } else {
-      return '{id: $id, code: $code, detail: $detail, status: $status}';
+bool isError(Map<String, dynamic> body) {
+  var count = 0;
+  const keys = ['Id', 'Code', 'Detail', 'Status'];
+
+  for (var key in body.keys) {
+    if (keys.contains(key)) {
+      count++;
     }
   }
+
+  return count == 4;
 }

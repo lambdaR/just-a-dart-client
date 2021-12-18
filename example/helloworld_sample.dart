@@ -11,25 +11,23 @@ void main() async {
     ),
   );
 
-  CallRequest req = CallRequest(name: 'Mighty Zeus');
-
-  CallResponse res1 = await hwservice.call(req);
-
-  print('the message is ${res1.message}');
-  print('the code is ${res1.code}');
-  print(res1);
-
+  CallRequest req1 = CallRequest(name: 'Mighty Zeus');
   StreamRequest req2 = StreamRequest(messages: 15, name: 'World');
 
-  final st = await hwservice.stream(req2);
-  final mst = st.asBroadcastStream();
+  try {
+    CallResponse res1 = await hwservice.call(req1);
+    res1.map((value) => print(value.message),
+        Merr: (CallResponseMerr err) => print(err.body!['body']));
 
-  final first = await mst.first;
-  print(first);
-
-  await for (var value in mst) {
-    print(value);
+    final st = await hwservice.stream(req2);
+    final bs = st.asBroadcastStream();
+    await for (var sr in bs) {
+      sr.map((value) => print(value.message),
+          Merr: (StreamResponseMerr err) => print(err.body));
+    }
+  } catch (e) {
+    print(e);
+  } finally {
+    exit(0);
   }
-
-  exit(0);
 }
