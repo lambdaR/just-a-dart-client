@@ -20,8 +20,8 @@ void main() async {
         Merr: (CallResponseMerr err) => print(err.body!['body']));
 
     final st = await hwservice.stream(req2);
-    final bs = st.asBroadcastStream();
-    await for (var sr in bs) {
+    
+    await for (var sr in st) {
       sr.map((value) => print(value.message),
           Merr: (StreamResponseMerr err) => print(err.body));
     }

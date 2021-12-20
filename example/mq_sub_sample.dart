@@ -1,23 +1,28 @@
-// import 'dart:io';
+import 'dart:io';
 
-// import 'package:m3o/m3o.dart';
+import 'package:m3o/m3o.dart';
 
-// void main() async {
-//   final token = Platform.environment['M3O_API_TOKEN']!;
-//   final mqservice = MQService(
-//     Options(
-//       token: token,
-//       address: liveAddress,
-//     ),
-//   );
+void main() async {
+  final token = Platform.environment['M3O_API_TOKEN']!;
+  final mqservice = MQService(
+    Options(
+      token: token,
+      address: liveAddress,
+    ),
+  );
 
-//   final request = {'topic': 'events'};
+  SubscribeRequest req = SubscribeRequest(topic: 'events');
 
-//   final st = await mqservice.subscribe(request);
-
-//   await for (var value in st) {
-//     print(value);
-//   }
-
-//   exit(0);
-// }
+  try {
+    final st = await mqservice.subscribe(req);
+    
+    await for (var sr in st) {
+      sr.map((value) => print(value.message),
+          Merr: (SubscribeResponseMerr err) => print(err.body));
+    }
+  } catch (e) {
+    print(e);
+  } finally {
+    exit(0);
+  }
+}

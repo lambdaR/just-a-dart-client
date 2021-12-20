@@ -27,7 +27,7 @@ class HelloWorldService {
         final err = Merr(res.toJson());
         return CallResponse.Merr(body: err.b);
       }
-      return CallResponse(message: jsonEncode(res.body));
+      return CallResponseData.fromJson(res.body);
     } catch (e) {
       throw Exception(e);
     }
@@ -47,7 +47,7 @@ class HelloWorldService {
         if (isError(vo)) {
           yield StreamResponse.Merr(body: vo);
         } else {
-          yield StreamResponse(message: value);
+          yield StreamResponseData.fromJson(vo);
         }
       }
     } catch (e) {
