@@ -12,7 +12,7 @@ void main() async {
   );
 
   CallRequest req1 = CallRequest(name: 'Mighty Zeus');
-  StreamRequest req2 = StreamRequest(messages: 15, name: 'World');
+  StreamRequest req2 = StreamRequest(messages: 15, name: 'World',);
 
   try {
     CallResponse res1 = await hwservice.call(req1);
