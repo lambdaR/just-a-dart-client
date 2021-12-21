@@ -11,8 +11,8 @@ void main() async {
     ),
   );
 
-  ForecastRequest req1 = ForecastRequest(days: 6, location: 'maykop');
-  NowRequest req2 = NowRequest(location: 'maykop');
+  ForecastRequest req1 = ForecastRequest(days: 6, location: 'london');
+  NowRequest req2 = NowRequest(location: 'london');
 
 
 
