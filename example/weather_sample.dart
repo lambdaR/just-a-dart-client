@@ -11,17 +11,23 @@ void main() async {
     ),
   );
 
-  final request1 = {'days': 2, 'location': 'London'};
+  ForecastRequest req1 = ForecastRequest(days: 6, location: 'london');
+  NowRequest req2 = NowRequest(location: 'london');
 
-  Response res1 = await wservice.forecast(request1);
 
-  print(res1);
 
-  final resquest2 = {'location': 'london'};
+  try {
+    ForecastResponse res1 = await wservice.forecast(req1);
+    res1.map((value) => print(value.forecast),
+        Merr: (ForecastResponseMerr err) => print(err.body!['body']));
 
-  Response res2 = await wservice.now(resquest2);
+    NowResponse res2 = await wservice.now(req2);
+    res2.map((value) => print(value),
+        Merr: (NowResponseMerr err) => print(err.body!['body']));
 
-  print(res2);
-
-  exit(0);
+  } catch (e) {
+    print(e);
+  } finally {
+    exit(0);
+  }
 }

@@ -11,13 +11,18 @@ void main() async {
     ),
   );
 
-  final request = {'topic': 'events'};
+  SubscribeRequest req = SubscribeRequest(topic: 'events');
 
-  final st = await mqservice.subscribe(request);
-
-  await for (var value in st) {
-    print(value);
+  try {
+    final st = await mqservice.subscribe(req);
+    
+    await for (var sr in st) {
+      sr.map((value) => print(value.message),
+          Merr: (SubscribeResponseMerr err) => print(err.body));
+    }
+  } catch (e) {
+    print(e);
+  } finally {
+    exit(0);
   }
-
-  exit(0);
 }

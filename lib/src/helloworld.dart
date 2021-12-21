@@ -1,6 +1,10 @@
 import 'dart:convert';
 
+import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:m3o/m3o.dart';
+
+part 'helloworld.freezed.dart';
+part 'helloworld.g.dart';
 
 class HelloWorldService {
   final Options opts;
@@ -17,9 +21,16 @@ class HelloWorldService {
       body: req.toJson(),
     );
 
-    Response res = await _client.call(request);
-    
-    return CallResponse.fromResponse(res);
+    try {
+      Response res = await _client.call(request);
+      if (isError(res.body)) {
+        final err = Merr(res.toJson());
+        return CallResponse.Merr(body: err.b);
+      }
+      return CallResponseData.fromJson(res.body);
+    } catch (e) {
+      throw Exception(e);
+    }
   }
 
   Stream<StreamResponse> stream(StreamRequest req) async* {
@@ -29,100 +40,55 @@ class HelloWorldService {
       body: req.toJson(),
     );
 
-    
-    M3OStream st = await _client.stream(request);
-
-   if (st.webS != null) {
-      await for (var value in st.webS!) {
-        yield StreamResponse.fromResponse(Response.fromJson(jsonDecode(value)));
+    try {
+      var webS = await _client.stream(request);
+      await for (var value in webS!) {
+        final vo = jsonDecode(value);
+        if (isError(vo)) {
+          yield StreamResponse.Merr(body: vo);
+        } else {
+          yield StreamResponseData.fromJson(vo);
+        }
       }
-    } else {
-      yield StreamResponse.fromResponse(Response(
-        body: null,
-        id: 'm3o-dart',
-        detail: 'address ${opts.address} unreachable',
-        status: 'service unavailable',
-      )
-      );
-    }
-  }
-}
-class CallRequest {
-  final String name;
-
-  CallRequest({required this.name});
-
-  Map<String, dynamic> toJson() {
-    return {
-      'name': this.name
-    };
-  }
-}
-
-class CallResponse {
-  final String? message;
-  final int? code;
-  final String? id;
-  final String? detail;
-  final String? status;
-
-  CallResponse({this.message, this.code, this.id, this.detail, this.status});
-
-  factory CallResponse.fromResponse(Response res) {
-    if (res.body != null) {
-      return CallResponse(message: res.body.toString());
-    } else {
-      return CallResponse(id: res.id, code: res.code, detail: res.detail, status: res.status);
-    }
-  }
-
-  @override
-  String toString() {
-    if (message != null) {
-      return message.toString();
-    } else {
-      return '{id: $id, code: $code, detail: $detail, status: $status}';
+    } catch (e) {
+      throw Exception(e);
     }
   }
 }
 
-class StreamRequest {
-  final int messages;
-  final String name;
+@Freezed()
+class CallRequest with _$CallRequest {
+  const factory CallRequest({String? name}) = _CallRequest;
 
-  StreamRequest({required this.messages, required this.name});
-  
-  Map<String, dynamic> toJson() {
-    return {
-      'messages': messages,
-      'name': name,
-    };
-  }
+  factory CallRequest.fromJson(Map<String, dynamic> json) =>
+      _$CallRequestFromJson(json);
 }
 
-class StreamResponse {
-  final String? message;
-  final int? code;
-  final String? id;
-  final String? detail;
-  final String? status;
+@Freezed()
+class CallResponse with _$CallResponse {
+  const factory CallResponse({String? message}) = CallResponseData;
 
-  StreamResponse({this.message, this.code, this.id, this.detail, this.status});
+  const factory CallResponse.Merr({Map<String, dynamic>? body}) =
+      CallResponseMerr;
 
-  factory StreamResponse.fromResponse(Response res) {
-    if (res.body != null) {
-      return StreamResponse(message: res.body.toString());
-    } else {
-      return StreamResponse(id: res.id, code: res.code, detail: res.detail, status: res.status);
-    }
-  }
+  factory CallResponse.fromJson(Map<String, dynamic> json) =>
+      _$CallResponseFromJson(json);
+}
 
-  @override
-  String toString() {
-    if (message != null) {
-      return message.toString();
-    } else {
-      return '{id: $id, code: $code, detail: $detail, status: $status}';
-    }
-  }
+@Freezed()
+class StreamRequest with _$StreamRequest {
+  const factory StreamRequest({int? messages, String? name}) = _StreamRequest;
+
+  factory StreamRequest.fromJson(Map<String, dynamic> json) =>
+      _$StreamRequestFromJson(json);
+}
+
+@Freezed()
+class StreamResponse with _$StreamResponse {
+  const factory StreamResponse({String? message}) = StreamResponseData;
+  const factory StreamResponse.Merr({Map<String, dynamic>? body}) =
+      StreamResponseMerr;
+
+  factory StreamResponse.fromJson(Map<String, dynamic> json) =>
+      _$StreamResponseFromJson(json);
 }

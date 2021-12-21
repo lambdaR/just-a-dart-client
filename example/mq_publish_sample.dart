@@ -11,14 +11,21 @@ void main() async {
     ),
   );
 
-  final request = {
-    'message': {'id': '200', 'type': 'Logging', 'user': 'Debo'},
-    'topic': 'events'
-  };
+  PublishRequest req = PublishRequest(topic: 'events', message: <String, dynamic> {
+    'id': 200,
+    'type': 'Logging',
+    'user': 'Debo'
+  });
 
-  Response res = await mqservice.publish(request);
+  try {
+    PublishResponse res = await mqservice.publish(req);
+    res.map((value) => print(value),
+        Merr: (PublishResponseMerr err) => print(err.body!['body']));
 
-  print(res);
+  } catch (e) {
+    print(e);
+  } finally {
+    exit(0);
+  }
 
-  exit(0);
 }
