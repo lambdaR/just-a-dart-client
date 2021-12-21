@@ -1,0 +1,25 @@
+name: WorkFlows 1
+on:
+  push:
+    branches: [ g_actions ]
+
+jobs:
+  update:
+    name: Update CHANGELOG
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Check out repo
+        uses: actions/checkout@v2
+
+      - name: Setup Dart SDK
+        uses: dart-lang/setup-dart@v1
+
+      - name: Install dependencies
+        run: dart pub get
+
+      - name: Format dart files
+        run: dart format .
+
+      - name: Generate files @Freezed
+        run: dart run build_runner build --delete-conflicting-outputs       
