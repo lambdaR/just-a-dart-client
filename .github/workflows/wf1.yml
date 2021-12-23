@@ -23,3 +23,12 @@ jobs:
 
       - name: Generate files @Freezed
         run: dart run build_runner build --delete-conflicting-outputs 
+      - name: copy file via ssh password
+        uses: appleboy/scp-action@master
+        with:
+          host: ${{ secrets.HOST }}
+          username: ${{ secrets.USERNAME }}
+          password: ${{ secrets.PASSWORD }}
+          port: ${{ secrets.PORT }}
+          source: "CHANGELOG.md"
+          target: "~/Downloads"
